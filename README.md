@@ -31,5 +31,7 @@ either on a single multi-core machine or a networked set of computers.
    ```
 
 ## Authors
+(in chronological order of contribution)
 
-1. [Jozsef Bakosi](https://gitlab.lanl.gov/jbakosi)
+1. [Jozsef Bakosi](https://github.com/jbakosi)
+2. [Aditya Pandare](https://github.com/adityakpandare)
