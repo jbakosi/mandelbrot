@@ -38,8 +38,6 @@ endif()
 # Echo status on third-party libraries directory
 if (TPL_DIR)
   MESSAGE(STATUS "Third-party library dir: " ${TPL_DIR})
-else()
-  message(FATAL_ERROR "Third-party library dir '${TPL_DIR}' is not specified")
 endif()
 
 # Mac OS X specifics
@@ -300,7 +298,9 @@ if("${isSystemDir}" STREQUAL "-1")
    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 endif("${isSystemDir}" STREQUAL "-1")
 
-include_directories(${TPL_DIR}/include)
+if (TPL_DIR)
+  include_directories(${TPL_DIR}/include)
+endif()
 
 project(mandel CXX)
 
