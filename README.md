@@ -26,8 +26,8 @@ either on a single multi-core machine or a networked set of computers.
 
    ```
    git clone --recursive https://github.com/jbakosi/mandelbrot.git; cd mandelbrot
-   mkdir tpl/build; cd tpl/build; cmake ..; make; cd -
-   mkdir build; cd build; cmake ../src; make; ./mandel; display out-mandelbrot.jpg
+   mkdir tpl/build; cd tpl/build; cmake -DCMAKE_CXX_COMPILER=mpicxx ..; make; cd -
+   mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx ../src; make; ./mandel; display out-mandelbrot.jpg
    ```
 
 ## Authors
