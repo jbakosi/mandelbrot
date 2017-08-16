@@ -8,7 +8,7 @@
 
 cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 
-project(TPL C CXX)
+project(TPL CXX)
 include(ExternalProject)
 
 # Quinoa cmake modules directory
@@ -73,19 +73,15 @@ endif()
 
 # Compilers
 # =========
-# There are two sets of compilers, given by the following CMake variables:
+# There are two (sets of) compilers, given by the following CMake variables:
 #
 # 1. The underlying compiler suite
 #
-#    UNDERLYING_C_COMPILER
 #    UNDERLYING_CXX_COMPILER
-#    UNDERLYING_Fortran_COMPILER
 #
 # 2. The MPI wrappers (of the underlying compilers)
 #
-#    MPI_C_COMPILER
 #    MPI_CXX_COMPILER
-#    MPI_Fortran_COMPILER
 
 # Convert system name to lower case
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)

@@ -1,0 +1,19 @@
+// *****************************************************************************
+/*!
+  \file      src/mandel.ci
+  \copyright 2016-2017, Los Alamos National Security, LLC.
+  \brief     Charm++ module interface file for Mandel
+  \details   Charm++ module interface file for Mandel.
+  \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
+*/
+// *****************************************************************************
+
+mainmodule mandel {
+
+  readonly CProxy_Main mainProxy;
+
+  mainchare Main {
+    entry Main( CkArgMsg* msg );
+  }
+
+}

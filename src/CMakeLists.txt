@@ -18,6 +18,20 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 # Set CMAKE_BUILD_TYPE
 include(BuildType)
 
+# Set CMAKE_BUILD_TYPE
+include(BuildType)
+
+# Set BUILD_SHARED_LIBS
+include(BuildShared)
+
+# Conditionally enforce static linking for executables added after this point.
+# This must precede all add_executable() calls adding executables to link
+# statically.
+if (NOT BUILD_SHARED_LIBS)
+  set(CMAKE_EXE_LINKER_FLAGS "-static")
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+endif()
+
 # Convert CMAKE_BUILD_TYPE
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
@@ -33,12 +47,15 @@ if (NOT TPL_DIR)
   set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP}-${ARCH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
+  if (EXISTS ${TPL_DIR}/include)
+    set(TPL_INCLUDE_DIR ${TPL_DIR}/include)
+    message(STATUS "Third-party library dir: " ${TPL_DIR})
+  endif()
 endif()
 
-# Echo status on third-party libraries directory
-if (TPL_DIR)
-  MESSAGE(STATUS "Third-party library dir: " ${TPL_DIR})
-endif()
+# Find MPI and get its underlying compilers
+include(MPICompilers)
+get_mpi_compilers()
 
 # Mac OS X specifics
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -149,13 +166,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
 
-  # Detect gcc version
-  execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
-                  OUTPUT_VARIABLE GCC_VERSION)
-  string(REGEX MATCHALL "[0-9]+" GCC_VERSION_COMPONENTS ${GCC_VERSION})
-  list(GET GCC_VERSION_COMPONENTS 0 GCC_MAJOR)
-  list(GET GCC_VERSION_COMPONENTS 1 GCC_MINOR)
-  message(STATUS "GCC version: ${GCC_MAJOR}.${GCC_MINOR}")
+  # Detect compiler version
+  include(DetectCXXversion)
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
@@ -298,22 +310,35 @@ if("${isSystemDir}" STREQUAL "-1")
    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 endif("${isSystemDir}" STREQUAL "-1")
 
-if (TPL_DIR)
-  include_directories(${TPL_DIR}/include)
-endif()
+include_directories(${TPL_INCLUDE_DIR}
+                    ${CHARM_INCLUDE_DIRS}
+                    ${PROJECT_BINARY_DIR})
 
 project(mandel CXX)
 
+### Quinoa executables build configuration #####################################
+
+# Basic configuration
+add_definitions()
+
+# Include function for adding Charm++ modules
+include(charm)
+
+# Link executables with the charmc wrapper
+STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
+       "${CHARM_COMPILER} -module DistributedLB -c++ <CMAKE_CXX_COMPILER>"
+       CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
+
+include(ConfigExecutable)
+
 ### Mandelbrot executable ######################################################
 add_executable(${MANDEL_EXECUTABLE}
-               Mandelbrot.C
-)
+               Mandel.C)
+
+config_executable(${MANDEL_EXECUTABLE})
 
 target_link_libraries(${MANDEL_EXECUTABLE}
                       ${JPEG_LIBRARY})
 
-INSTALL(TARGETS ${MANDEL_EXECUTABLE}
-        RUNTIME DESTINATION bin COMPONENT Runtime
-        LIBRARY DESTINATION lib COMPONENT Runtime
-        ARCHIVE DESTINATION lib COMPONENT Development
-)
+# Add custom dependencies for mandel's main Charm++ module
+addCharmModule( "mandel" "${MANDEL_EXECUTABLE}" )
