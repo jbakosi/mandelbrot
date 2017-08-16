@@ -13,7 +13,7 @@ either on a single multi-core machine or a networked set of computers.
 - Debian/Ubuntu linux:
 
    ```
-   apt-get install cmake g++ libjpeg-dev libboost1.63-dev
+   apt-get install cmake g++ libjpeg-dev libboost1.63-dev openmpi-bin libopenmpi-dev
    ```
 
 - Mac OS X:
