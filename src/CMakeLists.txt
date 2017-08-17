@@ -84,6 +84,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 
+# Get git revision
+include(GetGitRevisionDescription)
+git_describe(GIT_SHA1 --always)
+message(STATUS "git sha1: ${GIT_SHA1}")
+
 # Set names of executables
 set(MANDEL_EXECUTABLE mandel)
 
