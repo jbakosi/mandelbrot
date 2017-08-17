@@ -315,9 +315,10 @@ if("${isSystemDir}" STREQUAL "-1")
    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 endif("${isSystemDir}" STREQUAL "-1")
 
-include_directories(${TPL_INCLUDE_DIR}
-                    ${CHARM_INCLUDE_DIRS}
-                    ${PROJECT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}
+                    ${PROJECT_BINARY_DIR}       # For Charm++ modules
+                    ${TPL_INCLUDE_DIR}
+                    ${CHARM_INCLUDE_DIRS})
 
 project(mandel CXX)
 
