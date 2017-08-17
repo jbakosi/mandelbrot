@@ -14,6 +14,18 @@
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wunused-local-typedef"
+  #pragma clang diagnostic ignored "-Wunused-parameter"
+  #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+  #pragma clang diagnostic ignored "-Wreserved-id-macro"
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+  #pragma clang diagnostic ignored "-Wdeprecated"
+  #pragma clang diagnostic ignored "-Wdocumentation"
+  #pragma clang diagnostic ignored "-Wsign-conversion"
+  #pragma clang diagnostic ignored "-Wfloat-equal"
+  #pragma clang diagnostic ignored "-Wshift-sign-overflow"
+  #pragma clang diagnostic ignored "-Wshadow"
+  #pragma clang diagnostic ignored "-Wc++11-narrowing"
+  #pragma clang diagnostic ignored "-Wmissing-noreturn"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
@@ -33,6 +45,31 @@
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wunused-parameter"
+  #pragma clang diagnostic ignored "-Wunused-private-field"
+  #pragma clang diagnostic ignored "-Wshorten-64-to-32"
+  #pragma clang diagnostic ignored "-Wsign-conversion"
+  #pragma clang diagnostic ignored "-Wreserved-id-macro"
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+  #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wundef"
+  #pragma clang diagnostic ignored "-Wconversion"
+  #pragma clang diagnostic ignored "-Wdocumentation"
+  #pragma clang diagnostic ignored "-Wzero-length-array"
+  #pragma clang diagnostic ignored "-Wsign-compare"
+  #pragma clang diagnostic ignored "-Wunused-variable"
+  #pragma clang diagnostic ignored "-Wdouble-promotion"
+  #pragma clang diagnostic ignored "-Wshadow-field-in-constructor"
+  #pragma clang diagnostic ignored "-Wfloat-equal"
+  #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+  #pragma clang diagnostic ignored "-Wcast-align"
+  #pragma clang diagnostic ignored "-Wdeprecated"
+  #pragma clang diagnostic ignored "-Wheader-hygiene"
+  #pragma clang diagnostic ignored "-Wnon-virtual-dtor"
+  #pragma clang diagnostic ignored "-Wmismatched-tags"
+  #pragma clang diagnostic ignored "-Wshadow"
+  #pragma clang diagnostic ignored "-Wcovered-switch-default"
+  #pragma clang diagnostic ignored "-Wswitch-enum"
+  #pragma clang diagnostic ignored "-Wundefined-func-template"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wshadow"
@@ -52,9 +89,18 @@
   #pragma GCC diagnostic pop
 #endif
 
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
+
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 using namespace boost::gil;
 
@@ -85,14 +131,15 @@ struct mandelbrot_fn {
         // normalize the coords to (-2..1, -1.5..1.5)
         // (actually make y -1.0..2 so it is asymmetric, so we can verify some
         // view factory methods)
-        double t = get_num_iter( point2<double>( p.x/(double)_img_size.x*3-2,
-                                                 p.y/(double)_img_size.y*3-1.5f ) );
+        double t = get_num_iter(
+          point2<double>( p.x/static_cast<double>(_img_size.x)*3.0-2,
+                          p.y/static_cast<double>(_img_size.y)*3.0-1.5 ) );
         t = std::pow( t, 0.2 );
 
         value_type ret;
-        for (int k=0; k<num_channels<P>::value; ++k)
-            ret[k] = (typename channel_type<P>::type)
-                     (_in_color[k]*t + _out_color[k]*(1-t));
+        for (std::size_t k=0; k<num_channels<P>::value; ++k)
+            ret[k] = static_cast< typename channel_type<P>::type >(
+                     (_in_color[k]*t + _out_color[k]*(1-t)) );
         return ret;
     }
 
@@ -102,7 +149,7 @@ private:
         for (int i=0; i<MAX_ITER; ++i) {
             Z = point2<double>(Z.x*Z.x - Z.y*Z.y + p.x, 2*Z.x*Z.y + p.y);
             if (Z.x*Z.x + Z.y*Z.y > 4)
-                return i/(double)MAX_ITER;
+                return i/static_cast<double>(MAX_ITER);
         }
         return 0;
     }
@@ -130,5 +177,14 @@ class Main : public CBase_Main {
     }
 };
 
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+  #pragma clang diagnostic ignored "-Wmissing-prototypes"
+#endif
+
 #include "mandel.def.h"
 
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
