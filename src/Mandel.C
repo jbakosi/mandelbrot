@@ -81,8 +81,45 @@ private:
 
 class Main : public CBase_Main {
 
+  private:
+          unsigned long int start_s;
+          unsigned long int stop_s;
+
   public:
     Main( CkArgMsg* msg ) {
+
+      // initialize state
+      start_s = clock();
+      int numPixel;
+      double virtualization;
+
+      // set # of pixels
+      if (msg->argc>1)
+      {
+              numPixel = atoi(msg->argv[1]);
+      }
+      else
+      {
+              numPixel = 600;
+      }
+
+      // set degree of virtualization
+      if (msg->argc>2)
+      {
+              virtualization = atof(msg->argv[2]);
+      }
+      else
+      {
+              virtualization = 0.0;
+      }
+
+      // screen outputs about the code
+      CkPrintf("\n ------------------------------------------------------ \n");
+      CkPrintf(" Number of Pixels: %d \n", numPixel);
+      CkPrintf(" Number of PE's  : %d \n", CkNumPes());
+      CkPrintf(" Virtualization  : %f \n", virtualization);
+      CkPrintf(" ------------------------------------------------------ \n \n");
+
       delete msg;
       using deref_t = mandelbrot_fn< rgb8_pixel_t >;
       using point_t = deref_t::point_t;
@@ -92,11 +129,20 @@ class Main : public CBase_Main {
       boost::function_requires< PixelLocatorConcept<locator_t> >();
       gil_function_requires< StepIteratorConcept< locator_t::x_iterator > >();
 
-      point_t dims( 600, 600 );
+      point_t dims( numPixel, numPixel );
       my_virt_view_t mandel(dims, locator_t(point_t(0,0), point_t(1,1),
         deref_t(dims, rgb8_pixel_t(255,0,255), rgb8_pixel_t(0,255,0))));
       jpeg_write_view("out-mandelbrot.jpg",mandel);
 
+      CkExit();
+    }
+
+    // reduction to ensure completion and then exit
+    void complete()
+    {
+      stop_s = clock();
+      CkPrintf(" Computation time: %f . \n", (stop_s-start_s)/double(CLOCKS_PER_SEC));
+      CkPrintf(" ------------------------------------------------------ \n \n");
       CkExit();
     }
 };
