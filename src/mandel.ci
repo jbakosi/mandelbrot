@@ -21,10 +21,9 @@ mainmodule mandel {
 
   array[1D] mandelChare
   {
-    entry mandelChare();
-    entry void computeMandel(uint64_t chunksize,
-                             uint64_t remainder,
-                             double deltax);
+    entry mandelChare(uint64_t chunksize,
+                      uint64_t remainder,
+                      double deltax);
   }
 
 }
