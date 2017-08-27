@@ -26,8 +26,6 @@
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
-int numPixel;
-uint64_t numChare;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -115,16 +113,17 @@ class Main : public CBase_Main {
       // initialize state
       start_s = clock();
       mainProxy = thisProxy;
+      int imgsize;
       double virtualization;
 
       // set # of pixels
       if (msg->argc>1)
       {
-              numPixel = atoi(msg->argv[1]);
+              imgsize = atoi(msg->argv[1]);
       }
       else
       {
-              numPixel = 600;
+              imgsize = 600;
       }
 
       // set degree of virtualization
@@ -137,23 +136,15 @@ class Main : public CBase_Main {
               virtualization = 0.0;
       }
 
-      // --- part of the serial code
-      //using deref_t = mandelbrot_fn< rgb8_pixel_t >;
-      //using point_t = deref_t::point_t;
-      //using locator_t = virtual_2d_locator< deref_t, false >;
-      //using my_virt_view_t = image_view< locator_t >;
-
-      //boost::function_requires< PixelLocatorConcept<locator_t> >();
-      //gil_function_requires< StepIteratorConcept< locator_t::x_iterator > >();
+      delete msg;
 
       uint64_t chunksize, remainder;
 
-      // determine the number of chares, load per chare etc from the virtualization
-      numChare = linearLoadDistributor( virtualization,
-                                        numPixel,
-                                        CkNumPes(),
-                                        chunksize,
-                                        remainder );
+      auto numChare = linearLoadDistributor( virtualization,
+                                             imgsize,
+                                             CkNumPes(),
+                                             chunksize,
+                                             remainder );
       if (remainder>0)
       {
               CkPrintf("\n Remainder detected: %d \n", remainder);
@@ -161,21 +152,20 @@ class Main : public CBase_Main {
       }
 
       // screen outputs about the code
-      CkPrintf("\n ------------------------------------------------------ \n");
-      CkPrintf(" Number of Pixels: %d \n", numPixel);
-      CkPrintf(" Number of PE's  : %d \n", CkNumPes());
+      CkPrintf("\n ------------------------------------------------------\n");
+      CkPrintf(" Width in Pixels : %d \n", imgsize);
+      CkPrintf(" Number of PEs   : %d \n", CkNumPes());
       CkPrintf(" Virtualization  : %f \n", virtualization);
+      CkPrintf(" Chunksize       : %d \n", chunksize);
+      CkPrintf(" Remainder       : %d \n", remainder);
       CkPrintf(" Number of Chares: %d \n", numChare);
-      CkPrintf(" ------------------------------------------------------ \n \n");
-
-      delete msg;
-
-      // decompose (0,0) X (1,1) domain into numChare smaller domains
-      double deltax = 1.0 / (double)numChare;
+      CkPrintf(" ------------------------------------------------------\n");
 
       // create the chareArray
-      CProxy_mandelChare mandelArray =
-        CProxy_mandelChare::ckNew(numChare,chunksize,remainder,deltax);
+      CProxy_mandelChare mandelArray = CProxy_mandelChare::ckNew(numChare);
+
+      // compute Mandelbrot set in parallel
+      mandelArray.compute(imgsize,chunksize);
     }
 
     // reduction to ensure completion and then exit
@@ -187,6 +177,7 @@ class Main : public CBase_Main {
       CkExit();
     }
 };
+
 
 // *****************************************************************************
 class mandelChare : public CBase_mandelChare
@@ -209,13 +200,11 @@ class mandelChare : public CBase_mandelChare
             using const_reference = value_type;
             using argument_type = point_t;
             using result_type = reference;
-            BOOST_STATIC_CONSTANT(bool, is_mutable=false);
 
             value_type                    _in_color,_out_color;
             point_t                       _img_size;
             static const int MAX_ITER=100;        // max number of iterations
 
-            mandelbrot_fn() {}
             mandelbrot_fn( const point_t& sz,
                            const value_type& in_color,
                            const value_type& out_color ) :
@@ -223,12 +212,9 @@ class mandelChare : public CBase_mandelChare
 
             result_type operator()(const point_t& p) const {
 
-                // normalize the coords to (-2..1, -1.5..1.5)
-                // (actually make y -1.0..2 so it is asymmetric, so we can verify some
-                // view factory methods)
                 double t = get_num_iter(
-                  point2<double>( p.x/static_cast<double>(_img_size.x)*3.0-2,
-                                  p.y/static_cast<double>(_img_size.y)*3.0-1.5 ) );
+                  point2<double>( p.x/static_cast<double>(CkNumPes()*_img_size.x),
+                                  p.y/static_cast<double>(_img_size.y) ) );
                 t = std::pow( t, 0.2 );
 
                 value_type ret;
@@ -256,26 +242,14 @@ class mandelChare : public CBase_mandelChare
         mandelChare(CkMigrateMessage* msg) { delete msg; }
 
         // constructor
-        mandelChare(uint64_t chunksize, uint64_t remainder, double deltax)
+        mandelChare() {}
+
+        void compute(int imgsize, uint64_t chunksize)
         {
                 // location this chare works on
-                double xbeg, xend;
-                int width;
+                int xbeg = thisIndex * chunksize;
 
-                xbeg = (double)thisIndex * deltax;
-
-                if (thisIndex == numChare)
-                {
-                        xend = 1.0;
-                        width = (int)remainder;
-                }
-                else
-                {
-                        xend = (double)(thisIndex+1) * deltax;
-                        width = (int)chunksize;
-                }
-
-                //CkPrintf("%d : %d : %f , %f \n ",thisIndex,width,xbeg,xend);
+                CkPrintf("%d: %d\n",thisIndex,xbeg);
 
                 using rgb8_pixel_t = boost::gil::rgb8_pixel_t;
                 using deref_t = mandelbrot_fn< rgb8_pixel_t >;
@@ -287,17 +261,20 @@ class mandelChare : public CBase_mandelChare
                 boost::gil::gil_function_requires<
                   boost::gil::StepIteratorConcept< locator_t::x_iterator > >();
 
-                point_t dims( width, numPixel );
-                my_virt_view_t mandel(dims, locator_t(point_t(xbeg,0), point_t(xend,1),
-                  deref_t(dims, rgb8_pixel_t(255,0,255), rgb8_pixel_t(0,255,0))));
+                int x = -imgsize*2 + thisIndex*4*imgsize/CkNumPes();
+                int y = -imgsize*2;
+
+                point_t dims( imgsize/CkNumPes(), imgsize );
+                my_virt_view_t mandel(dims, locator_t(point_t(x,y), point_t(4,4),
+                  deref_t(dims, rgb8_pixel_t(0,0,0), rgb8_pixel_t(0,255,0))));
 
                 std::string filename, fileIndex;
                 fileIndex = std::to_string(thisIndex);
                 filename = fileIndex + ".mandelbrot.jpg";
                 jpeg_write_view(filename,mandel);
 
-                auto cb = CkCallback(CkReductionTarget(Main,complete), mainProxy);
-                contribute( 0, NULL, CkReduction::nop, cb );
+                // signal the runtime system that we are done with our part
+                contribute( CkCallback(CkReductionTarget(Main,complete), mainProxy) );
         }
 };
 

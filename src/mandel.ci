@@ -11,19 +11,16 @@
 mainmodule mandel {
 
   readonly CProxy_Main mainProxy;
-  readonly int numPixel;
-  readonly uint64_t numChare;
 
   mainchare Main {
     entry Main( CkArgMsg* msg );
-    entry [reductiontarget] void complete(void);
+    entry [reductiontarget] void complete();
   }
 
   array[1D] mandelChare
   {
-    entry mandelChare(uint64_t chunksize,
-                      uint64_t remainder,
-                      double deltax);
+    entry mandelChare();
+    entry void compute(int imgsize, uint64_t chunksize);
   }
 
 }
