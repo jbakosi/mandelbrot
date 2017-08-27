@@ -11,6 +11,7 @@
 mainmodule mandel {
 
   readonly CProxy_Main mainProxy;
+  readonly int numchare;
 
   mainchare Main {
     entry Main( CkArgMsg* msg );

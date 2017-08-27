@@ -26,6 +26,7 @@
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
+int numchare;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -140,16 +141,11 @@ class Main : public CBase_Main {
 
       uint64_t chunksize, remainder;
 
-      auto numChare = linearLoadDistributor( virtualization,
-                                             imgsize,
-                                             CkNumPes(),
-                                             chunksize,
-                                             remainder );
-      if (remainder>0)
-      {
-              CkPrintf("\n Remainder detected: %d \n", remainder);
-              numChare += 1;
-      }
+      numchare = linearLoadDistributor( virtualization,
+                                        imgsize,
+                                        CkNumPes(),
+                                        chunksize,
+                                        remainder );
 
       // screen outputs about the code
       CkPrintf("\n ------------------------------------------------------\n");
@@ -158,11 +154,11 @@ class Main : public CBase_Main {
       CkPrintf(" Virtualization  : %f \n", virtualization);
       CkPrintf(" Chunksize       : %d \n", chunksize);
       CkPrintf(" Remainder       : %d \n", remainder);
-      CkPrintf(" Number of Chares: %d \n", numChare);
+      CkPrintf(" Number of Chares: %d \n", numchare);
       CkPrintf(" ------------------------------------------------------\n");
 
       // create the chareArray
-      CProxy_mandelChare mandelArray = CProxy_mandelChare::ckNew(numChare);
+      CProxy_mandelChare mandelArray = CProxy_mandelChare::ckNew(numchare);
 
       // compute Mandelbrot set in parallel
       mandelArray.compute(imgsize,chunksize);
@@ -213,7 +209,7 @@ class mandelChare : public CBase_mandelChare
             result_type operator()(const point_t& p) const {
 
                 double t = get_num_iter(
-                  point2<double>( p.x/static_cast<double>(CkNumPes()*_img_size.x),
+                  point2<double>( p.x/static_cast<double>(numchare*_img_size.x),
                                   p.y/static_cast<double>(_img_size.y) ) );
                 t = std::pow( t, 0.2 );
 
@@ -261,10 +257,10 @@ class mandelChare : public CBase_mandelChare
                 boost::gil::gil_function_requires<
                   boost::gil::StepIteratorConcept< locator_t::x_iterator > >();
 
-                int x = -imgsize*2 + thisIndex*4*imgsize/CkNumPes();
+                int x = -imgsize*2 + thisIndex*4*imgsize/numchare;
                 int y = -imgsize*2;
 
-                point_t dims( imgsize/CkNumPes(), imgsize );
+                point_t dims( imgsize/numchare, imgsize );
                 my_virt_view_t mandel(dims, locator_t(point_t(x,y), point_t(4,4),
                   deref_t(dims, rgb8_pixel_t(0,0,0), rgb8_pixel_t(0,255,0))));
 
