@@ -245,7 +245,8 @@ class mandelChare : public CBase_mandelChare
         void compute(int imgsize, uint64_t chunksize, uint64_t remainder)
         {
                 auto width = chunksize;
-                if (thisIndex == numchare) width += remainder;
+                if (thisIndex == numchare-1) width += remainder;
+                width++;
 
                 int x = -imgsize*2 + thisIndex*4*width;
                 int y = -imgsize*2;
