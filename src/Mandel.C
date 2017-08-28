@@ -149,19 +149,21 @@ class Main : public CBase_Main {
 
       // screen outputs about the code
       CkPrintf("\n ------------------------------------------------------\n");
-      CkPrintf(" Width in Pixels : %d \n", imgsize);
-      CkPrintf(" Number of PEs   : %d \n", CkNumPes());
-      CkPrintf(" Virtualization  : %f \n", virtualization);
-      CkPrintf(" Chunksize       : %d \n", chunksize);
-      CkPrintf(" Remainder       : %d \n", remainder);
-      CkPrintf(" Number of Chares: %d \n", numchare);
+      CkPrintf(" Width in Pixels  : %d \n", imgsize);
+      CkPrintf(" Number of PEs    : %d \n", CkNumPes());
+      CkPrintf(" Virtualization   : %f \n", virtualization);
+      CkPrintf(" Chunksize        : %d \n", chunksize);
+      CkPrintf(" Remainder        : %d \n", remainder);
+      CkPrintf(" Load distribution: %d (%d*%d+%d)\n",
+                 numchare, numchare-1, chunksize, chunksize+remainder );
+
       CkPrintf(" ------------------------------------------------------\n");
 
       // create the chareArray
       CProxy_mandelChare mandelArray = CProxy_mandelChare::ckNew(numchare);
 
       // compute Mandelbrot set in parallel
-      mandelArray.compute(imgsize,chunksize);
+      mandelArray.compute(imgsize,chunksize,remainder);
     }
 
     // reduction to ensure completion and then exit
@@ -240,12 +242,16 @@ class mandelChare : public CBase_mandelChare
         // constructor
         mandelChare() {}
 
-        void compute(int imgsize, uint64_t chunksize)
+        void compute(int imgsize, uint64_t chunksize, uint64_t remainder)
         {
-                // location this chare works on
-                int xbeg = thisIndex * chunksize;
+                auto width = chunksize;
+                if (CkMyPe() == CkNumPes()-1) width += remainder;
+                ++width;
 
-                CkPrintf("%d: %d\n",thisIndex,xbeg);
+                int x = -imgsize*2 + thisIndex*4*width;
+                int y = -imgsize*2;
+
+                CkPrintf("%d: startx: %d, width: %d\n",thisIndex,x,4*width);
 
                 using rgb8_pixel_t = boost::gil::rgb8_pixel_t;
                 using deref_t = mandelbrot_fn< rgb8_pixel_t >;
@@ -257,10 +263,7 @@ class mandelChare : public CBase_mandelChare
                 boost::gil::gil_function_requires<
                   boost::gil::StepIteratorConcept< locator_t::x_iterator > >();
 
-                int x = -imgsize*2 + thisIndex*4*imgsize/numchare;
-                int y = -imgsize*2;
-
-                point_t dims( imgsize/numchare, imgsize );
+                point_t dims( width, imgsize );
                 my_virt_view_t mandel(dims, locator_t(point_t(x,y), point_t(4,4),
                   deref_t(dims, rgb8_pixel_t(0,0,0), rgb8_pixel_t(0,255,0))));
 
