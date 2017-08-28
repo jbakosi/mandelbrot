@@ -246,7 +246,6 @@ class mandelChare : public CBase_mandelChare
         {
                 auto width = chunksize;
                 if (CkMyPe() == CkNumPes()-1) width += remainder;
-                ++width;
 
                 int x = -imgsize*2 + thisIndex*4*width;
                 int y = -imgsize*2;
