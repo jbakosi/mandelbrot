@@ -344,7 +344,7 @@ add_executable(${MANDEL_EXECUTABLE}
 config_executable(${MANDEL_EXECUTABLE})
 
 target_link_libraries(${MANDEL_EXECUTABLE}
-                      ${JPEG_LIBRARY})
+                      ${TIFF_LIBRARY})
 
 # Add custom dependencies for mandel's main Charm++ module
 addCharmModule( "mandel" "${MANDEL_EXECUTABLE}" )

@@ -29,7 +29,7 @@ if(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIR})
 endif()
 
-#### LibJPEG
-find_package(JPEG REQUIRED)
+#### LibTIFF
+find_package(TIFF REQUIRED)
 
 message(STATUS "------------------------------------------")

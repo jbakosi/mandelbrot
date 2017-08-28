@@ -33,7 +33,7 @@
 
 #include <boost/gil/image.hpp>
 #include <boost/gil/typedefs.hpp>
-#include <boost/gil/extension/io/jpeg_io.hpp>
+#include <boost/gil/extension/io/tiff_io.hpp>
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

@@ -201,7 +201,7 @@ class mandelChare : public CBase_mandelChare
 
             value_type                    _in_color,_out_color;
             point_t                       _img_size;
-            static const int MAX_ITER=100;        // max number of iterations
+            static const int MAX_ITER=1000;        // max number of iterations
 
             mandelbrot_fn( const point_t& sz,
                            const value_type& in_color,
@@ -245,7 +245,7 @@ class mandelChare : public CBase_mandelChare
         void compute(int imgsize, uint64_t chunksize, uint64_t remainder)
         {
                 auto width = chunksize;
-                if (thisIndex == numchare) width += remainder;
+                if (thisIndex == numchare-1) width += remainder;
 
                 int x = -imgsize*2 + thisIndex*4*width;
                 int y = -imgsize*2;
@@ -268,8 +268,8 @@ class mandelChare : public CBase_mandelChare
 
                 std::string filename, fileIndex;
                 fileIndex = std::to_string(thisIndex);
-                filename = fileIndex + ".mandelbrot.jpg";
-                jpeg_write_view(filename,mandel);
+                filename = fileIndex + ".mandelbrot.tif";
+                tiff_write_view(filename,mandel);
 
                 // signal the runtime system that we are done with our part
                 contribute( CkCallback(CkReductionTarget(Main,complete), mainProxy) );
