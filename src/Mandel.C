@@ -137,6 +137,12 @@ class Main : public CBase_Main {
               virtualization = 0.0;
       }
 
+      if ((virtualization<0.0) || (virtualization>1.0))
+      {
+              CkPrintf("Virtualization expected in [0,1]! \n");
+              CkExit();
+      }
+
       delete msg;
 
       uint64_t chunksize, remainder;
@@ -158,6 +164,12 @@ class Main : public CBase_Main {
                  numchare, numchare-1, chunksize, chunksize+remainder );
 
       CkPrintf(" ------------------------------------------------------\n");
+
+      if (remainder>0)
+      {
+              CkPrintf("Non-zero remainders not supported! \n");
+              CkExit();
+      }
 
       // create the chareArray
       CProxy_mandelChare mandelArray = CProxy_mandelChare::ckNew(numchare);
@@ -247,7 +259,7 @@ class mandelChare : public CBase_mandelChare
                 auto width = chunksize;
                 if (thisIndex == numchare-1) width += remainder;
 
-                int x = -imgsize*2 + thisIndex*4*width;
+                int x = -imgsize*2 + thisIndex*4*chunksize;
                 int y = -imgsize*2;
 
                 CkPrintf("%d: startx: %d, width: %d\n",thisIndex,x,4*width);
