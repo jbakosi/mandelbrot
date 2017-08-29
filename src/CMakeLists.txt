@@ -165,8 +165,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-unused-function")
   add_compiler_flag("-Wno-stack-protector")
   add_compiler_flag("-Wno-unknown-pragmas")
-  add_compiler_flag("-mavx2")
-  add_compiler_flag("-ffast-math")
 
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "-Wno-unused-parameter")
