@@ -35,14 +35,14 @@ int numchare;
 class Main : public CBase_Main {
 
   private:
-    uint64_t start_s, stop_s;
+    long int start_s, stop_s;
 
-    uint64_t
+    int
     linearLoadDistributor( double virtualization,
-                           uint64_t load,
+                           int load,
                            int npe,
-                           uint64_t& chunksize,
-                           uint64_t& remainder )
+                           int& chunksize,
+                           int& remainder )
     // *****************************************************************************
     //  Compute linear load distribution for given total work and virtualization
     //! \param[in] virtualization Degree of virtualization [0.0...1.0]
@@ -89,10 +89,10 @@ class Main : public CBase_Main {
       const auto n = static_cast< double >( load ) / npe;
 
       // Compute work unit size based on the linear formula above
-      chunksize = static_cast< uint64_t >( (1.0 - n) * virtualization + n );
+      chunksize = static_cast< int >( (1.0 - n) * virtualization + n );
 
       // Compute number of work units with size computed ignoring remainder
-      uint64_t nchare = load / chunksize;
+      auto nchare = load / chunksize;
 
       // Compute remainder of work if the above number of units were to be created
       remainder = load - nchare * chunksize;
@@ -120,7 +120,8 @@ class Main : public CBase_Main {
       // set # of pixels
       if (msg->argc>1)
       {
-              imgsize = atoi(msg->argv[1]);
+              std::stringstream ss( msg->argv[1] );
+              ss >> imgsize;
       }
       else
       {
@@ -145,7 +146,7 @@ class Main : public CBase_Main {
 
       delete msg;
 
-      uint64_t chunksize, remainder;
+      int chunksize, remainder;
 
       numchare = linearLoadDistributor( virtualization,
                                         imgsize,
@@ -172,10 +173,10 @@ class Main : public CBase_Main {
       }
 
       // create the chareArray
-      CProxy_mandelChare mandelArray = CProxy_mandelChare::ckNew(numchare);
+      CProxy_mandelChare mandelArray = CProxy_mandelChare::ckNew( numchare );
 
       // compute Mandelbrot set in parallel
-      mandelArray.compute(imgsize,chunksize,remainder);
+      mandelArray.compute( imgsize, chunksize, remainder );
     }
 
     // reduction to ensure completion and then exit
@@ -254,7 +255,7 @@ class mandelChare : public CBase_mandelChare
         // constructor
         mandelChare() {}
 
-        void compute(int imgsize, uint64_t chunksize, uint64_t remainder)
+        void compute(int imgsize, int chunksize, int remainder)
         {
                 auto width = chunksize;
                 if (thisIndex == numchare-1) width += remainder;

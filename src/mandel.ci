@@ -21,7 +21,7 @@ mainmodule mandel {
   array[1D] mandelChare
   {
     entry mandelChare();
-    entry void compute(int imgsize, uint64_t chunksize, uint64_t remainder);
+    entry void compute(int imgsize, int chunksize, int remainder);
   }
 
 }

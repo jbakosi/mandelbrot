@@ -47,6 +47,7 @@
   #pragma GCC diagnostic ignored "-Wfloat-equal"
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wpedantic"
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #include "mandel.decl.h"
