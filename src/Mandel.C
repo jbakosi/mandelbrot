@@ -263,7 +263,7 @@ class mandelChare : public CBase_mandelChare
                 int x = -imgsize*2 + thisIndex*4*chunksize;
                 int y = -imgsize*2;
 
-                CkPrintf("%d: startx: %d, width: %d\n",thisIndex,x,4*width);
+                //CkPrintf("%d: startx: %d, width: %d\n",thisIndex,x,4*width);
 
                 using rgb8_pixel_t = boost::gil::rgb8_pixel_t;
                 using deref_t = mandelbrot_fn< rgb8_pixel_t >;
