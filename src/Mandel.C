@@ -176,7 +176,7 @@ class Main : public CBase_Main {
       CProxy_mandelChare mandelArray = CProxy_mandelChare::ckNew( numchare );
 
       // compute Mandelbrot set in parallel
-      mandelArray.compute( imgsize, chunksize, remainder );
+      mandelArray.compute( imgsize, chunksize, remainder, 0 );
     }
 
     // reduction to ensure completion and then exit
@@ -225,7 +225,7 @@ class mandelChare : public CBase_mandelChare
 
                 double t = get_num_iter(
                   point2<double>( p.x/static_cast<double>(numchare*_img_size.x),
-                                  p.y/static_cast<double>(_img_size.y) ) );
+                                  p.y/static_cast<double>(numchare*_img_size.y) ) );
                 t = std::pow( t, 0.2 );
 
                 value_type ret;
@@ -255,13 +255,13 @@ class mandelChare : public CBase_mandelChare
         // constructor
         mandelChare() {}
 
-        void compute(int imgsize, int chunksize, int remainder)
+        void compute(int imgsize, int chunksize, int remainder, int counter)
         {
                 auto width = chunksize;
                 if (thisIndex == numchare-1) width += remainder;
 
                 int x = -imgsize*2 + thisIndex*4*chunksize;
-                int y = -imgsize*2;
+                int y = -imgsize*2 + counter  *4*chunksize;
 
                 //CkPrintf("%d: startx: %d, width: %d\n",thisIndex,x,4*width);
 
@@ -275,17 +275,45 @@ class mandelChare : public CBase_mandelChare
                 boost::gil::gil_function_requires<
                   boost::gil::StepIteratorConcept< locator_t::x_iterator > >();
 
-                point_t dims( width, imgsize );
+                point_t dims( width, width );
+                //point_t dims( width, imgsize );
                 my_virt_view_t mandel(dims, locator_t(point_t(x,y), point_t(4,4),
                   deref_t(dims, rgb8_pixel_t(0,0,0), rgb8_pixel_t(0,255,0))));
 
                 std::string filename, fileIndex;
-                fileIndex = std::to_string(thisIndex);
+                int prefix = (thisIndex*numchare) + counter;
+                fileIndex = std::to_string(prefix);
                 filename = fileIndex + ".mandelbrot.tif";
                 tiff_write_view(filename,mandel);
 
+                subchunkDone(imgsize, chunksize, remainder, counter);
+
                 // signal the runtime system that we are done with our part
+                if (counter == numchare-1)
+                {
                 contribute( CkCallback(CkReductionTarget(Main,complete), mainProxy) );
+                }
+        }
+
+        void subchunkDone(int imgsize, int chunksize, int remainder, int counter)
+        {
+                counter++;
+                if (counter < numchare)
+                {
+                        CkPrintf("%d: counter: %d\n",thisIndex,counter);
+                        // continue calculation
+                        compute(imgsize, chunksize, remainder, counter);
+                }
+                //else if (counter == numchare)
+                //{
+                //        // signal the runtime system that we are done with our part
+                //        contribute( CkCallback(CkReductionTarget(Main,complete), mainProxy) );
+                //}
+                else if (counter > numchare)
+                {
+                        CkPrintf("Error: Shouldn't be here!!! \n");
+                        CkExit();
+                }
         }
 };
 

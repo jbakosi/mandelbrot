@@ -1,0 +1,27 @@
+#
+# script to combine mandelbrot image
+# argument of number of chares required
+#
+
+dim=$1
+
+cd ./build/
+
+files=*.tif
+
+for ifile in $files
+do
+ echo $ifile
+ filearray[${ifile%%.*}]=$ifile
+done
+
+rm outputfile.txt
+for i in ${filearray[@]}
+do
+ basename $i >> outputfile.txt
+done
+
+montage `cat outputfile.txt`  -geometry +0+0 -tile 1x$dim intermediate.tif
+montage intermediate.tif -geometry +0+0 -tile $dim final_mandelbrot.tif
+
+echo Compilation complete.
