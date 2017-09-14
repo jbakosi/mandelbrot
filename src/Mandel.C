@@ -15,6 +15,8 @@
 
 #include <limits>
 #include <cstdint>
+#include <vector>
+using std::vector;
 
 
 // *****************************************************************************
@@ -35,7 +37,10 @@ int numchare;
 class Main : public CBase_Main {
 
   private:
+
+    CProxy_mandelChare mandelArray;
     long int start_s, stop_s;
+    vector<int> counter;
 
     int
     linearLoadDistributor( double virtualization,
@@ -172,11 +177,38 @@ class Main : public CBase_Main {
               CkExit();
       }
 
+      counter.resize(numchare);
+
       // create the chareArray
-      CProxy_mandelChare mandelArray = CProxy_mandelChare::ckNew( numchare );
+      mandelArray = CProxy_mandelChare::ckNew( numchare );
 
       // compute Mandelbrot set in parallel
       mandelArray.compute( imgsize, chunksize, remainder, 0 );
+    }
+
+    // looping over subchunks in each chare
+    void subchunkDone(int imgsize, int chunksize, int remainder, int icount, int chareIndex)
+    {
+            icount++;
+            counter[chareIndex] = icount;
+
+            if (icount < numchare)
+            {
+                    // continue calculation
+                    //CkPrintf("%d: counter: %d\n",chareIndex,icount);
+                    mandelArray[chareIndex].compute(imgsize, chunksize, remainder, icount);
+            }
+            //else if (icount == numchare)
+            //{
+            //        // signal the runtime system that we are done with our part
+            //        contribute( CkCallback(CkReductionTarget(Main,complete), mainProxy) );
+            //}
+            else if (icount > numchare)
+            {
+                    // not expected to be here
+                    CkPrintf("Error: Shouldn't be here!!! \n");
+                    CkExit();
+            }
     }
 
     // reduction to ensure completion and then exit
@@ -255,13 +287,13 @@ class mandelChare : public CBase_mandelChare
         // constructor
         mandelChare() {}
 
-        void compute(int imgsize, int chunksize, int remainder, int counter)
+        void compute(int imgsize, int chunksize, int remainder, int icount)
         {
                 auto width = chunksize;
                 if (thisIndex == numchare-1) width += remainder;
 
                 int x = -imgsize*2 + thisIndex*4*chunksize;
-                int y = -imgsize*2 + counter  *4*chunksize;
+                int y = -imgsize*2 + icount   *4*chunksize;
 
                 //CkPrintf("%d: startx: %d, width: %d\n",thisIndex,x,4*width);
 
@@ -276,43 +308,21 @@ class mandelChare : public CBase_mandelChare
                   boost::gil::StepIteratorConcept< locator_t::x_iterator > >();
 
                 point_t dims( width, width );
-                //point_t dims( width, imgsize );
                 my_virt_view_t mandel(dims, locator_t(point_t(x,y), point_t(4,4),
                   deref_t(dims, rgb8_pixel_t(0,0,0), rgb8_pixel_t(0,255,0))));
 
                 std::string filename, fileIndex;
-                int prefix = (thisIndex*numchare) + counter;
+                int prefix = (thisIndex*numchare) + icount;
                 fileIndex = std::to_string(prefix);
                 filename = fileIndex + ".mandelbrot.tif";
                 tiff_write_view(filename,mandel);
 
-                subchunkDone(imgsize, chunksize, remainder, counter);
+                mainProxy.subchunkDone(imgsize, chunksize, remainder, icount, thisIndex);
 
                 // signal the runtime system that we are done with our part
-                if (counter == numchare-1)
+                if (icount == numchare-1)
                 {
                 contribute( CkCallback(CkReductionTarget(Main,complete), mainProxy) );
-                }
-        }
-
-        void subchunkDone(int imgsize, int chunksize, int remainder, int counter)
-        {
-                counter++;
-                if (counter < numchare)
-                {
-                        CkPrintf("%d: counter: %d\n",thisIndex,counter);
-                        // continue calculation
-                        compute(imgsize, chunksize, remainder, counter);
-                }
-                //else if (counter == numchare)
-                //{
-                //        // signal the runtime system that we are done with our part
-                //        contribute( CkCallback(CkReductionTarget(Main,complete), mainProxy) );
-                //}
-                else if (counter > numchare)
-                {
-                        CkPrintf("Error: Shouldn't be here!!! \n");
-                        CkExit();
                 }
         }
 };

@@ -15,13 +15,14 @@ mainmodule mandel {
 
   mainchare Main {
     entry Main( CkArgMsg* msg );
+    entry void subchunkDone(int imgsize, int chunksize, int remainder, int icount, int chareIndex);
     entry [reductiontarget] void complete();
   }
 
   array[1D] mandelChare
   {
     entry mandelChare();
-    entry void compute(int imgsize, int chunksize, int remainder, int counter);
+    entry void compute(int imgsize, int chunksize, int remainder, int icount);
   }
 
 }
