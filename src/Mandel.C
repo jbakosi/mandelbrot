@@ -29,6 +29,7 @@ using std::vector;
 //!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
 int numchare;
+int intervalLB;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -143,6 +144,16 @@ class Main : public CBase_Main {
               virtualization = 0.0;
       }
 
+      // set degree of virtualization
+      if (msg->argc>3)
+      {
+              intervalLB = atoi(msg->argv[3]);
+      }
+      else
+      {
+              intervalLB = 10;
+      }
+
       if ((virtualization<0.0) || (virtualization>1.0))
       {
               CkPrintf("Virtualization expected in [0,1]! \n");
@@ -168,6 +179,7 @@ class Main : public CBase_Main {
       CkPrintf(" Remainder        : %d \n", remainder);
       CkPrintf(" Load distribution: %d (%d*%d+%d)\n",
                  numchare, numchare-1, chunksize, chunksize+remainder );
+      CkPrintf(" LB interval      : %d \n", intervalLB);
 
       CkPrintf(" ------------------------------------------------------\n");
 
@@ -321,7 +333,7 @@ class mandelChare : public CBase_mandelChare
                 filename = fileIndex + ".mandelbrot.tif";
                 tiff_write_view(filename,mandel);
 
-		if (icount%10==0)
+		if (icount%intervalLB==0)
 		{
 			AtSync();
 		}

@@ -1,0 +1,4 @@
+# cleaning up ./build/ directory
+
+cd ./build/
+rm *.tif *.sts *.projrc *.topo *.log.* 

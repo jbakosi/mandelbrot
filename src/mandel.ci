@@ -12,6 +12,7 @@ mainmodule mandel {
 
   readonly CProxy_Main mainProxy;
   readonly int numchare;
+  readonly int intervalLB;
 
   mainchare Main {
     entry Main( CkArgMsg* msg );
