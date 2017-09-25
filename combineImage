@@ -11,9 +11,10 @@ files=*.tif
 
 for ifile in $files
 do
- echo $ifile
  filearray[${ifile%%.*}]=$ifile
 done
+
+echo Files to process: ${#filearray[@]}
 
 rm outputfile.txt
 for i in ${filearray[@]}
