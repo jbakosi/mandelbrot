@@ -285,7 +285,11 @@ class mandelChare : public CBase_mandelChare
         mandelChare(CkMigrateMessage* msg) { delete msg; }
 
         // constructor
-        mandelChare() {}
+        mandelChare()
+	{
+		//for AtSync
+		usesAtSync = true;
+	}
 
         void compute(int imgsize, int chunksize, int remainder, int icount)
         {
@@ -317,6 +321,11 @@ class mandelChare : public CBase_mandelChare
                 filename = fileIndex + ".mandelbrot.tif";
                 tiff_write_view(filename,mandel);
 
+		if (icount%10==0)
+		{
+			AtSync();
+		}
+
                 mainProxy.subchunkDone(imgsize, chunksize, remainder, icount, thisIndex);
 
                 // signal the runtime system that we are done with our part
@@ -325,6 +334,11 @@ class mandelChare : public CBase_mandelChare
                 contribute( CkCallback(CkReductionTarget(Main,complete), mainProxy) );
                 }
         }
+
+	//void ResumeFromSync()
+	//{
+	//	 mainProxy.subchunkDone(imgsize, chunksize, remainder, icount, thisIndex);
+	//}
 };
 
 #include "NoWarning_mandel.def.h"
